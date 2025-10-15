@@ -1,1 +1,102 @@
-https://<ton-user>.github.io/twitch-embed.html
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Twitch Player Embed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://embed.twitch.tv https://clips.twitch.tv; script-src 'self' https://embed.twitch.tv; style-src 'self' 'unsafe-inline'; frame-src https://player.twitch.tv https://clips.twitch.tv;">
+  <style>
+    :root { color-scheme: dark; }
+    html, body { height:100%; margin:0; background:#0f0f1a; font-family:system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'; }
+    #app { height:100%; display:flex; flex-direction:column; }
+    header { padding:10px 14px; color:#c9d1ff; background:linear-gradient(90deg,#4b6cb7,#182848); font-weight:600; }
+    #mount { flex:1; min-height:0; }
+    .error { color:#fff; padding:20px; }
+    .meta { padding:8px 14px; color:#9aa4c7; font-size:12px; border-top:1px solid #232342; }
+    a { color:#8fb2ff; text-decoration:none; }
+    .hidden { display:none; }
+  </style>
+  <script>
+    // utilitaires
+    function qp(k, def=null){ const v=new URLSearchParams(location.search).get(k); return v===null?def:v; }
+    function boolParam(k, def=true){
+      const v = qp(k);
+      if (v===null) return def;
+      return !(v==="0"||v==="false"||v==="no");
+    }
+    function renderError(msg){
+      const m = document.getElementById("mount");
+      m.innerHTML = "<div class='error'>⚠️ " + msg + "</div>";
+    }
+    // démarre après chargement de la page
+    async function start(){
+      const type = qp("type"); // live | vod | clip
+      const channel = qp("channel");
+      const video = qp("video"); // ex: v123456789
+      const clip = qp("clip");   // ex: ClipSlug
+      const autoplay = boolParam("autoplay", true);
+      const muted = boolParam("muted", true);
+      const parent = location.hostname; // GitHub Pages: <user>.github.io
+
+      document.getElementById("meta").textContent =
+        `type=${type || "?"} · parent=${parent}` +
+        (channel?` · channel=${channel}`:"") +
+        (video?` · video=${video}`:"") +
+        (clip?` · clip=${clip}`:"");
+
+      // CLIP → iframe clips.twitch.tv
+      if (type === "clip") {
+        if (!clip) return renderError("Paramètre 'clip' manquant.");
+        const ifr = document.createElement("iframe");
+        const u = new URL("https://clips.twitch.tv/embed");
+        u.searchParams.set("clip", clip);
+        u.searchParams.set("parent", parent);
+        u.searchParams.set("autoplay", autoplay ? "true" : "false");
+        u.searchParams.set("muted", muted ? "true" : "false");
+        ifr.width = "100%";
+        ifr.height = "100%";
+        ifr.allowFullscreen = true;
+        ifr.frameBorder = "0";
+        ifr.src = u.toString();
+        document.getElementById("mount").appendChild(ifr);
+        return;
+      }
+
+      // LIVE/VOD → player JS
+      const s = document.createElement("script");
+      s.src = "https://embed.twitch.tv/embed/v1.js";
+      s.onload = () => {
+        const opts = {
+          width: "100%",
+          height: "100%",
+          parent: [parent],
+          autoplay,
+          muted,
+          layout: "video"
+        };
+        if (type === "live") {
+          if (!channel) return renderError("Paramètre 'channel' manquant.");
+          opts.channel = channel;
+        } else if (type === "vod") {
+          if (!video) return renderError("Paramètre 'video' manquant (ex: v123456789).");
+          opts.video = video;
+        } else {
+          return renderError("Paramètre 'type' invalide. Utilise: live | vod | clip.");
+        }
+        // eslint-disable-next-line no-undef
+        new Twitch.Embed("mount", opts);
+      };
+      s.onerror = () => renderError("Impossible de charger le SDK Twitch.");
+      document.body.appendChild(s);
+    }
+    window.addEventListener("DOMContentLoaded", start);
+  </script>
+</head>
+<body>
+  <div id="app">
+    <header>Twitch Player</header>
+    <div id="mount"></div>
+    <div id="meta" class="meta"></div>
+  </div>
+</body>
+</html>
