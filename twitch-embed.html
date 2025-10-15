@@ -4,47 +4,39 @@
   <meta charset="utf-8" />
   <title>Twitch Player Embed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://embed.twitch.tv https://clips.twitch.tv; script-src 'self' https://embed.twitch.tv; style-src 'self' 'unsafe-inline'; frame-src https://player.twitch.tv https://clips.twitch.tv;">
+  <!-- CSP assouplie pour le SDK Twitch -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self' https: data: blob:;
+                 script-src 'self' https://embed.twitch.tv 'unsafe-inline';
+                 style-src 'self' 'unsafe-inline';
+                 img-src * data:;
+                 frame-src https://player.twitch.tv https://clips.twitch.tv https://www.twitch.tv;">
   <style>
     :root { color-scheme: dark; }
-    html, body { height:100%; margin:0; background:#0f0f1a; font-family:system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'; }
+    html, body { height:100%; margin:0; background:#0f0f1a; font-family:system-ui, -apple-system, Segoe UI, Roboto; }
     #app { height:100%; display:flex; flex-direction:column; }
     header { padding:10px 14px; color:#c9d1ff; background:linear-gradient(90deg,#4b6cb7,#182848); font-weight:600; }
     #mount { flex:1; min-height:0; }
+    .meta { padding:6px 10px; color:#9aa4c7; font-size:12px; border-top:1px solid #232342; }
     .error { color:#fff; padding:20px; }
-    .meta { padding:8px 14px; color:#9aa4c7; font-size:12px; border-top:1px solid #232342; }
-    a { color:#8fb2ff; text-decoration:none; }
-    .hidden { display:none; }
   </style>
   <script>
-    // utilitaires
     function qp(k, def=null){ const v=new URLSearchParams(location.search).get(k); return v===null?def:v; }
-    function boolParam(k, def=true){
-      const v = qp(k);
-      if (v===null) return def;
-      return !(v==="0"||v==="false"||v==="no");
-    }
-    function renderError(msg){
-      const m = document.getElementById("mount");
-      m.innerHTML = "<div class='error'>⚠️ " + msg + "</div>";
-    }
-    // démarre après chargement de la page
+    function boolParam(k, def=true){ const v=qp(k); if(v===null) return def; return !(v==="0"||v==="false"||v==="no"); }
+    function renderError(msg){ document.getElementById("mount").innerHTML = "<div class='error'>⚠️ "+msg+"</div>"; }
+
     async function start(){
-      const type = qp("type"); // live | vod | clip
+      const type = qp("type");               // live | vod | clip
       const channel = qp("channel");
-      const video = qp("video"); // ex: v123456789
-      const clip = qp("clip");   // ex: ClipSlug
+      const video = qp("video");             // ex: v123456789
+      const clip = qp("clip");               // ex: ClipSlug
       const autoplay = boolParam("autoplay", true);
       const muted = boolParam("muted", true);
-      const parent = location.hostname; // GitHub Pages: <user>.github.io
+      const parent = location.hostname;
 
       document.getElementById("meta").textContent =
-        `type=${type || "?"} · parent=${parent}` +
-        (channel?` · channel=${channel}`:"") +
-        (video?` · video=${video}`:"") +
-        (clip?` · clip=${clip}`:"");
+        `href=${location.href} | type=${type} | channel=${channel} | video=${video} | clip=${clip} | parent=${parent}`;
 
-      // CLIP → iframe clips.twitch.tv
       if (type === "clip") {
         if (!clip) return renderError("Paramètre 'clip' manquant.");
         const ifr = document.createElement("iframe");
@@ -53,27 +45,16 @@
         u.searchParams.set("parent", parent);
         u.searchParams.set("autoplay", autoplay ? "true" : "false");
         u.searchParams.set("muted", muted ? "true" : "false");
-        ifr.width = "100%";
-        ifr.height = "100%";
-        ifr.allowFullscreen = true;
-        ifr.frameBorder = "0";
+        ifr.width = "100%"; ifr.height = "100%"; ifr.allowFullscreen = true; ifr.frameBorder = "0";
         ifr.src = u.toString();
         document.getElementById("mount").appendChild(ifr);
         return;
       }
 
-      // LIVE/VOD → player JS
       const s = document.createElement("script");
       s.src = "https://embed.twitch.tv/embed/v1.js";
       s.onload = () => {
-        const opts = {
-          width: "100%",
-          height: "100%",
-          parent: [parent],
-          autoplay,
-          muted,
-          layout: "video"
-        };
+        const opts = { width:"100%", height:"100%", parent:[parent], autoplay, muted, layout:"video" };
         if (type === "live") {
           if (!channel) return renderError("Paramètre 'channel' manquant.");
           opts.channel = channel;
