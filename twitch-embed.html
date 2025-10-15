@@ -12,6 +12,7 @@
                  img-src * data:;
                  frame-src https://player.twitch.tv https://clips.twitch.tv https://www.twitch.tv;">
 
+  
   <script>
     function qp(k, def=null){ const v=new URLSearchParams(location.search).get(k); return v===null?def:v; }
     function boolParam(k, def=true){ const v=qp(k); if(v===null) return def; return !(v==="0"||v==="false"||v==="no"); }
