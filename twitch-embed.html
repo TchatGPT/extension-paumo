@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Twitch Player (test)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- CSP compatible Twitch -->
+  <!-- CSP assouplie pour le SDK Twitch -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self' https: data: blob:;
                  script-src 'self' https://embed.twitch.tv 'unsafe-inline';
@@ -17,19 +17,13 @@
     #app { height:100%; display:flex; flex-direction:column; }
     header { padding:10px 14px; color:#c9d1ff; background:linear-gradient(90deg,#4b6cb7,#182848); font-weight:600; }
     #mount { flex:1; min-height:0; }
+    .meta { padding:6px 10px; color:#9aa4c7; font-size:12px; border-top:1px solid #232342; }
     .error { color:#fff; padding:20px; }
-    #meta { display:none; padding:6px 10px; color:#9aa4c7; font-size:12px; border-top:1px solid #232342; }
   </style>
   <script>
-    // utils
-    const qs = new URLSearchParams(location.search);
-    const qp = (k, d=null) => qs.get(k) ?? d;
-    const boolParam = (k, def=true) => {
-      const v = qp(k);
-      if (v === null) return def;
-      return !(v === "0" || v === "false" || v === "no");
-    };
-    const showError = (m) => { document.getElementById("mount").innerHTML = "<div class='error'>⚠️ " + m + "</div>"; };
+    function qp(k, def=null){ const v=new URLSearchParams(location.search).get(k); return v===null?def:v; }
+    function boolParam(k, def=true){ const v=qp(k); if(v===null) return def; return !(v==="0"||v==="false"||v==="no"); }
+    function renderError(msg){ document.getElementById("mount").innerHTML = "<div class='error'>⚠️ "+msg+"</div>"; }
 
     async function start(){
       const type = qp("type");               // live | vod | clip
@@ -39,17 +33,12 @@
       const autoplay = boolParam("autoplay", true);
       const muted = boolParam("muted", true);
       const parent = location.hostname;
-      const debug = boolParam("debug", false);
 
-      // Debug (facultatif avec ?debug=1)
-      if (debug) {
-        const meta = document.getElementById("meta");
-        meta.style.display = "block";
-        meta.textContent = `href=${location.href} | type=${type} | channel=${channel} | video=${video} | clip=${clip} | parent=${parent}`;
-      }
+      document.getElementById("meta").textContent =
+        `href=${location.href} | type=${type} | channel=${channel} | video=${video} | clip=${clip} | parent=${parent}`;
 
       if (type === "clip") {
-        if (!clip) return showError("Paramètre 'clip' manquant.");
+        if (!clip) return renderError("Paramètre 'clip' manquant.");
         const ifr = document.createElement("iframe");
         const u = new URL("https://clips.twitch.tv/embed");
         u.searchParams.set("clip", clip);
@@ -67,18 +56,18 @@
       s.onload = () => {
         const opts = { width:"100%", height:"100%", parent:[parent], autoplay, muted, layout:"video" };
         if (type === "live") {
-          if (!channel) return showError("Paramètre 'channel' manquant.");
+          if (!channel) return renderError("Paramètre 'channel' manquant.");
           opts.channel = channel;
         } else if (type === "vod") {
-          if (!video) return showError("Paramètre 'video' manquant (ex: v123456789).");
+          if (!video) return renderError("Paramètre 'video' manquant (ex: v123456789).");
           opts.video = video;
         } else {
-          return showError("Paramètre 'type' invalide. Utilise: live | vod | clip.");
+          return renderError("Paramètre 'type' invalide. Utilise: live | vod | clip.");
         }
         // eslint-disable-next-line no-undef
         new Twitch.Embed("mount", opts);
       };
-      s.onerror = () => showError("Impossible de charger le SDK Twitch.");
+      s.onerror = () => renderError("Impossible de charger le SDK Twitch.");
       document.body.appendChild(s);
     }
     window.addEventListener("DOMContentLoaded", start);
@@ -87,8 +76,6 @@
 <body>
   <div id="app">
     <header>Twitch Player</header>
-    <div id="mount"></div>
-    <div id="meta"></div>
   </div>
 </body>
 </html>
