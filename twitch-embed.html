@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <title>Twitch Player (test)</title>
+  <title>Twitch Player</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <!-- CSP assouplie pour le SDK Twitch -->
   <meta http-equiv="Content-Security-Policy"
@@ -11,8 +11,15 @@
                  style-src 'self' 'unsafe-inline';
                  img-src * data:;
                  frame-src https://player.twitch.tv https://clips.twitch.tv https://www.twitch.tv;">
-
-  
+  <style>
+    :root { color-scheme: dark; }
+    html, body { height:100%; margin:0; background:#0f0f1a; font-family:system-ui, -apple-system, Segoe UI, Roboto; }
+    #app { height:100%; display:flex; flex-direction:column; }
+    header { padding:10px 14px; color:#c9d1ff; background:linear-gradient(90deg,#4b6cb7,#182848); font-weight:600; }
+    #mount { flex:1; min-height:0; }
+    .meta { padding:6px 10px; color:#9aa4c7; font-size:12px; border-top:1px solid #232342; }
+    .error { color:#fff; padding:20px; }
+  </style>
   <script>
     function qp(k, def=null){ const v=new URLSearchParams(location.search).get(k); return v===null?def:v; }
     function boolParam(k, def=true){ const v=qp(k); if(v===null) return def; return !(v==="0"||v==="false"||v==="no"); }
