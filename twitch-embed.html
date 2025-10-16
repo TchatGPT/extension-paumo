@@ -1,4 +1,16 @@
-<!-- remplace le <style> et une petite partie du <script> -->
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Twitch Player (test)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- CSP compatible Twitch -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self' https: data: blob:;
+                 script-src 'self' https://embed.twitch.tv 'unsafe-inline';
+                 style-src 'self' 'unsafe-inline';
+                 img-src * data:;
+                 frame-src https://player.twitch.tv https://clips.twitch.tv https://www.twitch.tv;">
 <style>
   :root { color-scheme: dark; }
   html, body, #app, #mount { height:100%; margin:0; background:#0f0f1a; overflow:hidden; }
@@ -58,3 +70,11 @@
   function show(msg){ document.getElementById("mount").innerHTML = `<div class="error">${msg}</div>`; }
   window.addEventListener("DOMContentLoaded", start);
 </script>
+</head>
+<body>
+  <div id="app">
+    <div id="mount"></div>
+    <div id="meta"></div>
+  </div>
+</body>
+</html>
